@@ -14,16 +14,24 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # In order to do so, uncomment the following line.
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+LIBS += -L$$PWD/lib/live555/x86 -lliveMedia -lBasicUsageEnvironment -lgroupsock -lUsageEnvironment
 
 INCLUDEPATH +=\
-    gui/include
+    gui/include \
+    include/live555/BasicUsageEnvironment \
+    include/live555/groupsock \
+    include/live555/liveMedia \
+    include/live555/UsageEnvironment \
+    rtspclient/include
 
 SOURCES += \
+    rtspclient/src/rtspclient_self.cpp \
     gui/src/main.cpp \
     gui/src/dialog.cpp
 
 HEADERS += \
-    gui/include/dialog.h
+    gui/include/dialog.h \
+    rtspclient/include/rtspclient_self.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
