@@ -8,7 +8,13 @@ static int TestRTSPClient_CallBack(int _iType, RTSPClientAttr *_pstRTSPClientAtt
 {
     UsageEnvironment* env = RTSPClientSession::m_penv;
 
-    *env << "chenwenmin  " << __func__ << ":" <<__LINE__ << " len " << _pstRTSPClientAttr->m_uiDataLen << " pcData addr:" << _pucData << " _pvPri addr:" << _pvPri << "\n";
+
+    if(NULL != _pstRTSPClientAttr) {
+        *env << "chenwenmin  " << __func__ << ":" <<__LINE__ << " _iType:" << _iType << " len " << _pstRTSPClientAttr->m_uiDataLen << " pcData addr:" << _pucData << " _pvPri addr:" << _pvPri << "\n";
+    } else {
+        *env << "chenwenmin  " << __func__ << ":" <<__LINE__ << " _iType:" << _iType << " pcData addr:" << _pucData << " _pvPri addr:" << _pvPri << "\n";
+
+    }
 
     return 0;
 }
@@ -28,11 +34,12 @@ void TestRTSPClientSession()
     snprintf(stRTSPClientInfo.m_cRTSPUrl, sizeof(stRTSPClientInfo.m_cRTSPUrl), "%s", "rtsp://192.168.128.30:8554/slamtv61.264");
     stRTSPClientInfo.m_pRTSPClientCallBack = TestRTSPClient_CallBack;
     stRTSPClientSession2.StartRTSPClientSession(&stRTSPClientInfo);
-
+#if 0
     sleep(5);
     stRTSPClientSession.StopRTSPClientSession();
     sleep(5);
     stRTSPClientSession2.StopRTSPClientSession();
+#endif
 
 }
 

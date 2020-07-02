@@ -429,7 +429,6 @@ void shutdownStream(RTSPClient* rtspClient, int exitCode) {
     Boolean someSubsessionsWereActive = False;
     MediaSubsessionIterator iter(*scs.session);
     MediaSubsession* subsession;
-
     while ((subsession = iter.next()) != NULL) {
         env << "chenwenmin pid" << getpid() << " "  << __func__ << ":"<< __LINE__ << " iter " << ".\n";
       if (subsession->sink != NULL) {
@@ -451,6 +450,11 @@ void shutdownStream(RTSPClient* rtspClient, int exitCode) {
     }
   }
 
+  RTSPClient_CallBack* pRTSPClientCallBack = NULL;
+  pRTSPClientCallBack = ((ourRTSPClient *)rtspClient)->m_pRTSPClientCallBack;
+  if(NULL != pRTSPClientCallBack) {
+       (*pRTSPClientCallBack)(RTSPC_CALLBACK_TYPE_CLOSE, NULL, NULL, ((ourRTSPClient *)rtspClient)->m_pvPri);
+  }
   env << *rtspClient << "Closing the stream.\n";
   Medium::close(rtspClient);
     // Note that this will also cause this stream's "StreamClientState" structure to get reclaimed.
@@ -582,7 +586,7 @@ void DummySink::afterGettingFrame(unsigned frameSize, unsigned numTruncatedBytes
         envir() << "chenwenmin pid " << (int *)m_pRTSPClientCallBack << " "<< __func__ << ":" <<__LINE__ << "\n";
         stRTSPClientAttr.m_uiDataLen = frameSize;
 
-        (*m_pRTSPClientCallBack)(0, &stRTSPClientAttr, fReceiveBuffer, m_pvPri);
+        (*m_pRTSPClientCallBack)(RTSPC_CALLBACK_TYPE_MEDIA_DATA, &stRTSPClientAttr, fReceiveBuffer, m_pvPri);
     }
     printfHex(fReceiveBuffer, (frameSize > 32) ? 32 : frameSize);
   // Then continue, to request the next frame of data:
