@@ -10,4 +10,6 @@
 
 int main_rtspclient(int argc, char** argv);
 
+void TestRTSPClientSession();
+
 #endif // __RTSPCLIENT_SEFL_H

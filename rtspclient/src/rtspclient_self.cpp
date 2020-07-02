@@ -40,7 +40,7 @@ void streamTimerHandler(void* clientData);
   // called at the end of a stream's expected duration (if the stream has not already signaled its end using a RTCP "BYE")
 
 // The main streaming routine (for each "rtsp://" URL):
-void openURL(UsageEnvironment& env, char const* progName, char const* rtspURL);
+RTSPClient* openURL(UsageEnvironment& env, char const* progName, char const* rtspURL);
 
 // Used to iterate through each stream's 'subsessions', setting up each one:
 void setupNextSubsession(RTSPClient* rtspClient);
@@ -176,14 +176,14 @@ private:
 
 static unsigned rtspClientCount = 0; // Counts how many streams (i.e., "RTSPClient"s) are currently in use.
 
-void openURL(UsageEnvironment& env, char const* progName, char const* rtspURL) {
+RTSPClient* openURL(UsageEnvironment& env, char const* progName, char const* rtspURL) {
   // Begin by creating a "RTSPClient" object.  Note that there is a separate "RTSPClient" object for each stream that we wish
   // to receive (even if more than stream uses the same "rtsp://" URL).
   env << "chenwenmin pid" << getpid() << " "  << __func__ << " " << __LINE__ << " chenwenmin : " << rtspURL << "\n";
   RTSPClient* rtspClient = ourRTSPClient::createNew(env, rtspURL, RTSP_CLIENT_VERBOSITY_LEVEL, progName);
   if (rtspClient == NULL) {
     env << "Failed to create a RTSP client for URL \"" << rtspURL << "\": " << env.getResultMsg() << "\n";
-    return;
+    return NULL;
   }
 
   ++rtspClientCount;
@@ -193,6 +193,8 @@ void openURL(UsageEnvironment& env, char const* progName, char const* rtspURL) {
   // Instead, the following function call returns immediately, and we handle the RTSP response later, from within the event loop:
   env << "chenwenmin pid" << getpid() << " "  << __func__ << ":" <<__LINE__ << "\n";
   rtspClient->sendDescribeCommand(continueAfterDESCRIBE);
+
+  return rtspClient;
 }
 
 
@@ -602,12 +604,13 @@ public:
 
 
 class RTSPClientSession/*: public ourRTSPClient*/ {
-protected:
+public:
   RTSPClientSession();
   virtual ~RTSPClientSession();
 
 public:
   static int RTSPClientSessionInit();
+  static int RTSPClientSessionDispatch();
   int StartRTSPClientSession(RTSPClientInfo *_pRTSPClientInfo);
   int StopRTSPClientSession();
   int SetCBRTSPClientSession();
@@ -647,12 +650,17 @@ int RTSPClientSession::RTSPClientSessionInit()
     if(NULL == RTSPClientSession::m_penv) {
         RTSPClientSession::m_pscheduler = BasicTaskScheduler::createNew();
         RTSPClientSession::m_penv = BasicUsageEnvironment::createNew(*(RTSPClientSession::m_pscheduler));
-        UsageEnvironment* env = RTSPClientSession::m_penv;
-        // All subsequent activity takes place within the event loop:
-        env->taskScheduler().doEventLoop(&eventLoopWatchVariable);
-        // This function call does not return, unless, at some point in time, "eventLoopWatchVariable" gets set to something non-zero.
     }
 
+    return 0;
+}
+
+int RTSPClientSession::RTSPClientSessionDispatch()
+{
+    UsageEnvironment* env = RTSPClientSession::m_penv;
+    // All subsequent activity takes place within the event loop:
+    env->taskScheduler().doEventLoop(&eventLoopWatchVariable);
+    // This function call does not return, unless, at some point in time, "eventLoopWatchVariable" gets set to something non-zero.
     return 0;
 }
 
@@ -667,9 +675,29 @@ int RTSPClientSession::StartRTSPClientSession(RTSPClientInfo *_pRTSPClientInfo)
     }
 
     UsageEnvironment* env = RTSPClientSession::m_penv;
-    openURL(*env, "abcd", _pRTSPClientInfo->m_cRTSPUrl);
-
+    m_pRTSPClient = openURL(*env, "abcd", _pRTSPClientInfo->m_cRTSPUrl);
 
     return 0;
 }
 
+
+int RTSPClientSession::StopRTSPClientSession()
+{
+    shutdownStream(m_pRTSPClient, 1);
+
+    return 0;
+}
+
+void TestRTSPClientSession()
+{
+    RTSPClientSession::RTSPClientSessionInit();
+
+    RTSPClientSession stRTSPClientSession;
+
+    RTSPClientInfo stRTSPClientInfo;
+    snprintf(stRTSPClientInfo.m_cRTSPUrl, sizeof(stRTSPClientInfo.m_cRTSPUrl), "%s", "rtsp://192.168.128.30:8554/slamtv60.264");
+
+    stRTSPClientSession.StartRTSPClientSession(&stRTSPClientInfo);
+
+    RTSPClientSession::RTSPClientSessionDispatch();
+}
