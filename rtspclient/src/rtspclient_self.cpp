@@ -603,37 +603,6 @@ Boolean DummySink::continuePlaying() {
   return True;
 }
 
-#define  RTSPCLIENT_URL_LEN     256
-
-class RTSPClientInfo {
-public:
-    char m_cRTSPUrl[RTSPCLIENT_URL_LEN];//rtsp url
-    RTSPClient_CallBack* m_pRTSPClientCallBack;//callback
-};
-
-
-class RTSPClientSession/*: public ourRTSPClient*/ {
-public:
-  RTSPClientSession();
-  virtual ~RTSPClientSession();
-
-public:
-  static int RTSPClientSessionInit();
-  static int RTSPClientSessionDispatch();
-  int StartRTSPClientSession(RTSPClientInfo *_pRTSPClientInfo);
-  int StopRTSPClientSession();
-  int SetCBRTSPClientSession();
-
-private:
-  RTSPClient *m_pRTSPClient;
-  u_int8_t* m_pucReceiveFrame;
-  void *m_pvPri;
-
-  public:
-  static TaskScheduler* m_pscheduler;
-  static UsageEnvironment* m_penv;
-
-};
 
 TaskScheduler* RTSPClientSession::m_pscheduler = NULL;
 UsageEnvironment* RTSPClientSession::m_penv = NULL;
@@ -733,15 +702,8 @@ int RTSPClientSession::StopRTSPClientSession()
 }
 
 
-static int TestRTSPClient_CallBack(int _iType, RTSPClientAttr *_pstRTSPClientAttr, u_int8_t *_pucData, void *_pvPri)
-{
-    UsageEnvironment* env = RTSPClientSession::m_penv;
 
-    *env << "chenwenmin  " << __func__ << ":" <<__LINE__ << "len " << _pstRTSPClientAttr->m_uiDataLen << "pcData addr:" << _pucData << " _pvPri addr:" << _pvPri << "\n";
-
-    return 0;
-}
-
+/*
 void TestRTSPClientSession()
 {
     RTSPClientSession::RTSPClientSessionInit();
@@ -764,3 +726,4 @@ void TestRTSPClientSession()
     stRTSPClientSession2.StopRTSPClientSession();
 
 }
+*/

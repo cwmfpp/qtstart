@@ -3,6 +3,39 @@
 
 #include <QApplication>
 
+
+static int TestRTSPClient_CallBack(int _iType, RTSPClientAttr *_pstRTSPClientAttr, u_int8_t *_pucData, void *_pvPri)
+{
+    UsageEnvironment* env = RTSPClientSession::m_penv;
+
+    *env << "chenwenmin  " << __func__ << ":" <<__LINE__ << " len " << _pstRTSPClientAttr->m_uiDataLen << " pcData addr:" << _pucData << " _pvPri addr:" << _pvPri << "\n";
+
+    return 0;
+}
+
+void TestRTSPClientSession()
+{
+    RTSPClientSession::RTSPClientSessionInit();
+
+    RTSPClientSession stRTSPClientSession;
+    RTSPClientSession stRTSPClientSession2;
+
+    RTSPClientInfo stRTSPClientInfo;
+    snprintf(stRTSPClientInfo.m_cRTSPUrl, sizeof(stRTSPClientInfo.m_cRTSPUrl), "%s", "rtsp://192.168.128.30:8554/slamtv60.264");
+    stRTSPClientInfo.m_pRTSPClientCallBack = TestRTSPClient_CallBack;
+    stRTSPClientSession.StartRTSPClientSession(&stRTSPClientInfo);
+
+    snprintf(stRTSPClientInfo.m_cRTSPUrl, sizeof(stRTSPClientInfo.m_cRTSPUrl), "%s", "rtsp://192.168.128.30:8554/slamtv61.264");
+    stRTSPClientInfo.m_pRTSPClientCallBack = TestRTSPClient_CallBack;
+    stRTSPClientSession2.StartRTSPClientSession(&stRTSPClientInfo);
+
+    sleep(5);
+    stRTSPClientSession.StopRTSPClientSession();
+    sleep(5);
+    stRTSPClientSession2.StopRTSPClientSession();
+
+}
+
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
