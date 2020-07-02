@@ -453,7 +453,7 @@ void shutdownStream(RTSPClient* rtspClient, int exitCode) {
   RTSPClient_CallBack* pRTSPClientCallBack = NULL;
   pRTSPClientCallBack = ((ourRTSPClient *)rtspClient)->m_pRTSPClientCallBack;
   if(NULL != pRTSPClientCallBack) {
-       (*pRTSPClientCallBack)(RTSPC_CALLBACK_TYPE_CLOSE, NULL, NULL, ((ourRTSPClient *)rtspClient)->m_pvPri);
+       (*pRTSPClientCallBack)(RTSPC_CALLBACK_TYPE_SESSION_CLOSE, NULL, NULL, ((ourRTSPClient *)rtspClient)->m_pvPri);
   }
   env << *rtspClient << "Closing the stream.\n";
   Medium::close(rtspClient);

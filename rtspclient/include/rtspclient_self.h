@@ -22,7 +22,7 @@ struct RTSPClientAttr{
 
 
 #define RTSPC_CALLBACK_TYPE_MEDIA_DATA      1
-#define RTSPC_CALLBACK_TYPE_CLOSE           2
+#define RTSPC_CALLBACK_TYPE_SESSION_CLOSE           2
 typedef int (RTSPClient_CallBack)(int _iType, RTSPClientAttr *_pstRTSPClientAttr, unsigned char *_pucData, void *_pvPri);
 
 
