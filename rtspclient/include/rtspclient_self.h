@@ -8,6 +8,16 @@
  *
 */
 
+
+struct RTSPClientAttr{
+    unsigned int m_uiDataLen;
+    unsigned int m_uiTimestamp;
+    int m_iWidth;
+    int m_iHigh;
+};
+
+typedef int (RTSPClient_CallBack)(int _iType, RTSPClientAttr *_pstRTSPClientAttr, unsigned char *_pucData, void *_pvPri);
+
 int main_rtspclient(int argc, char** argv);
 
 void TestRTSPClientSession();

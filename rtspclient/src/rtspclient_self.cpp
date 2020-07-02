@@ -138,6 +138,7 @@ protected:
 
 public:
   StreamClientState scs;
+  RTSPClient_CallBack* m_pRTSPClientCallBack;
 };
 
 // Define a data sink (a subclass of "MediaSink") to receive the data for each subsession (i.e., each audio or video 'substream').
@@ -151,6 +152,7 @@ public:
                   MediaSubsession& subsession, // identifies the kind of data that's being received
                   char const* streamId = NULL); // identifies the stream itself (optional)
   void printfHex(u_int8_t* data, int len);
+  RTSPClient_CallBack* m_pRTSPClientCallBack;
 
 private:
   DummySink(UsageEnvironment& env, MediaSubsession& subsession, char const* streamId);
@@ -308,6 +310,8 @@ void continueAfterSETUP(RTSPClient* rtspClient, int resultCode, char* resultStri
       << "\" subsession: " << env.getResultMsg() << "\n";
       break;
     }
+
+    ((DummySink *)(scs.subsession->sink))->m_pRTSPClientCallBack = ((ourRTSPClient*)rtspClient)->m_pRTSPClientCallBack;
 
     env << *rtspClient << "Created a data sink for the \"" << *scs.subsession << "\" subsession\n";
     scs.subsession->miscPtr = rtspClient; // a hack to let subsession handler functions get the "RTSPClient" from the subsession
@@ -568,6 +572,15 @@ void DummySink::afterGettingFrame(unsigned frameSize, unsigned numTruncatedBytes
 #endif
   envir() << "\n";
 #endif
+    if(NULL != m_pRTSPClientCallBack) {
+        envir() << "chenwenmin pid " << getpid() << " "  << "tid " << (int)syscall(__NR_gettid) << " "<< __func__ << ":" <<__LINE__ << "\n";
+        //(int _iType, RTSPClientAttr *_pstRTSPClientAttr, unsigned char *_pucData, void *_pvPri);
+        RTSPClientAttr stRTSPClientAttr;
+        envir() << "chenwenmin pid " << (int *)m_pRTSPClientCallBack << " "<< __func__ << ":" <<__LINE__ << "\n";
+        stRTSPClientAttr.m_uiDataLen = frameSize;
+
+        (*m_pRTSPClientCallBack)(0, &stRTSPClientAttr, fReceiveBuffer, NULL);
+    }
     printfHex(fReceiveBuffer, (frameSize > 32) ? 32 : frameSize);
   // Then continue, to request the next frame of data:
     envir() << "chenwenmin pid " << getpid() << " "  << "tid " << (int)syscall(__NR_gettid) << " "<< __func__ << ":" <<__LINE__ << "\n";
@@ -586,15 +599,6 @@ Boolean DummySink::continuePlaying() {
                         onSourceClosure, this);
   return True;
 }
-
-struct RTSPClientAttr{
-    unsigned int m_uiDataLen;
-    unsigned int m_uiTimestamp;
-    int m_iWidth;
-    int m_iHigh;
-};
-
-typedef int (RTSPClient_CallBack)(int _iType, RTSPClientAttr *_pstRTSPClientAttr, u_int8_t *_pucData, void *_pvPri);
 
 #define  RTSPCLIENT_URL_LEN     256
 
@@ -620,7 +624,7 @@ public:
 private:
   RTSPClient *m_pRTSPClient;
   u_int8_t* m_pucReceiveFrame;
-  RTSPClient_CallBack* m_pRTSPClientCallBack;
+  RTSPClient_CallBack *m_pRTSPClientCallBack;
 
   public:
   static TaskScheduler* m_pscheduler;
@@ -707,7 +711,12 @@ int RTSPClientSession::StartRTSPClientSession(RTSPClientInfo *_pRTSPClientInfo)
     }
 
     UsageEnvironment* env = RTSPClientSession::m_penv;
+    m_pRTSPClientCallBack = _pRTSPClientInfo->m_pRTSPClientCallBack;
+
     m_pRTSPClient = openURL(*env, "wenminchen@126.com", _pRTSPClientInfo->m_cRTSPUrl);
+    ((ourRTSPClient*)m_pRTSPClient)->m_pRTSPClientCallBack = m_pRTSPClientCallBack;
+
+    //StreamClientState& scs = ((ourRTSPClient*)m_pRTSPClient)->scs; // alias
 
     return 0;
 }
@@ -720,19 +729,35 @@ int RTSPClientSession::StopRTSPClientSession()
     return 0;
 }
 
+
+static int TestRTSPClient_CallBack(int _iType, RTSPClientAttr *_pstRTSPClientAttr, u_int8_t *_pucData, void *_pvPri)
+{
+    UsageEnvironment* env = RTSPClientSession::m_penv;
+
+    *env << "chenwenmin  " << __func__ << ":" <<__LINE__ << "len " << _pstRTSPClientAttr->m_uiDataLen << "\n";
+
+    return 0;
+}
+
 void TestRTSPClientSession()
 {
     RTSPClientSession::RTSPClientSessionInit();
 
     RTSPClientSession stRTSPClientSession;
+    RTSPClientSession stRTSPClientSession2;
 
     RTSPClientInfo stRTSPClientInfo;
     snprintf(stRTSPClientInfo.m_cRTSPUrl, sizeof(stRTSPClientInfo.m_cRTSPUrl), "%s", "rtsp://192.168.128.30:8554/slamtv60.264");
-
+    stRTSPClientInfo.m_pRTSPClientCallBack = TestRTSPClient_CallBack;
     stRTSPClientSession.StartRTSPClientSession(&stRTSPClientInfo);
 
-    sleep(5);
+    snprintf(stRTSPClientInfo.m_cRTSPUrl, sizeof(stRTSPClientInfo.m_cRTSPUrl), "%s", "rtsp://192.168.128.30:8554/slamtv61.264");
+    stRTSPClientInfo.m_pRTSPClientCallBack = TestRTSPClient_CallBack;
+    stRTSPClientSession2.StartRTSPClientSession(&stRTSPClientInfo);
 
+    sleep(5);
     stRTSPClientSession.StopRTSPClientSession();
+    sleep(5);
+    stRTSPClientSession2.StopRTSPClientSession();
 
 }
