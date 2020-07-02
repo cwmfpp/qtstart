@@ -731,4 +731,8 @@ void TestRTSPClientSession()
 
     stRTSPClientSession.StartRTSPClientSession(&stRTSPClientInfo);
 
+    sleep(5);
+
+    stRTSPClientSession.StopRTSPClientSession();
+
 }
