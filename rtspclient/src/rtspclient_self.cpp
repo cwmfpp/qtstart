@@ -1,3 +1,5 @@
+
+#include <pthread.h>
 #include "rtspclient_self.h"
 
 /**********
@@ -620,7 +622,7 @@ private:
   u_int8_t* m_pucReceiveFrame;
   RTSPClient_CallBack* m_pRTSPClientCallBack;
 
-  private:
+  public:
   static TaskScheduler* m_pscheduler;
   static UsageEnvironment* m_penv;
 
@@ -644,25 +646,55 @@ RTSPClientSession::~RTSPClientSession()
     return;
 }
 
+static void *RTSPClientThread(void *)
+{
+    for(;;) {
+        UsageEnvironment* env = RTSPClientSession::m_penv;
+        // All subsequent activity takes place within the event loop:
+        *env << "chenwenmin  " << __NR_gettid << " "<< __func__ << ":" <<__LINE__ << "\n";
+        *env << "chenwenmin pid " << getpid() << " "  << "tid " << (int)syscall(__NR_gettid) << " "<< __func__ << ":" <<__LINE__ << "\n";
+        env->taskScheduler().doEventLoop(&eventLoopWatchVariable);
+        // This function call does not return, unless, at some point in time, "eventLoopWatchVariable" gets set to something non-zero.
+    }
+
+    return NULL;
+}
+
 int RTSPClientSession::RTSPClientSessionInit()
 {
     // Begin by setting up our usage environment:
     if(NULL == RTSPClientSession::m_penv) {
         RTSPClientSession::m_pscheduler = BasicTaskScheduler::createNew();
         RTSPClientSession::m_penv = BasicUsageEnvironment::createNew(*(RTSPClientSession::m_pscheduler));
+
+        pthread_t new_th;
+        int ret;
+
+        ret = pthread_create(&new_th, NULL, RTSPClientThread, NULL);
+        if (ret != 0) {
+            return -1;
+        }
+        pthread_detach(new_th);
     }
 
     return 0;
 }
 
+/*
 int RTSPClientSession::RTSPClientSessionDispatch()
 {
-    UsageEnvironment* env = RTSPClientSession::m_penv;
-    // All subsequent activity takes place within the event loop:
-    env->taskScheduler().doEventLoop(&eventLoopWatchVariable);
-    // This function call does not return, unless, at some point in time, "eventLoopWatchVariable" gets set to something non-zero.
+    pthread_t new_th;
+    int ret;
+
+    ret = pthread_create(&new_th, NULL, RTSPClientThread, NULL);
+    if (ret != 0) {
+        return -1;
+    }
+    pthread_detach(new_th);
+
     return 0;
 }
+*/
 
 int RTSPClientSession::StartRTSPClientSession(RTSPClientInfo *_pRTSPClientInfo)
 {
@@ -675,7 +707,7 @@ int RTSPClientSession::StartRTSPClientSession(RTSPClientInfo *_pRTSPClientInfo)
     }
 
     UsageEnvironment* env = RTSPClientSession::m_penv;
-    m_pRTSPClient = openURL(*env, "abcd", _pRTSPClientInfo->m_cRTSPUrl);
+    m_pRTSPClient = openURL(*env, "wenminchen@126.com", _pRTSPClientInfo->m_cRTSPUrl);
 
     return 0;
 }
@@ -699,5 +731,4 @@ void TestRTSPClientSession()
 
     stRTSPClientSession.StartRTSPClientSession(&stRTSPClientInfo);
 
-    RTSPClientSession::RTSPClientSessionDispatch();
 }
