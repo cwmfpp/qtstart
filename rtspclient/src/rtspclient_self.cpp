@@ -78,11 +78,16 @@ int main_rtspclient(int argc, char** argv) {
 
   // There are argc-1 URLs: argv[1] through argv[argc-1].  Open and start streaming each one:
   for (int i = 1; i <= argc-1; ++i) {
+#include <asm-generic/unistd.h>
+      //__NR_gettid = 186
+    *env << "chenwenmin pid " << getpid() << " "  << "tid " << (int)syscall(__NR_gettid) << " "<< __func__ << ":" <<__LINE__ << " " << argv[i]  << "\n";
     openURL(*env, argv[0], argv[i]);
   }
 
   // All subsequent activity takes place within the event loop:
+  *env << "chenwenmin pid " << getpid() << " "  << "tid " << (int)syscall(__NR_gettid) << " "<< __func__ << ":" <<__LINE__ << "\n";
   env->taskScheduler().doEventLoop(&eventLoopWatchVariable);
+  *env << "chenwenmin pid " << getpid() << " "  << "tid " << (int)syscall(__NR_gettid) << " "<< __func__ << ":" <<__LINE__ << "\n";
     // This function call does not return, unless, at some point in time, "eventLoopWatchVariable" gets set to something non-zero.
 
   return 0;
@@ -143,6 +148,7 @@ public:
   static DummySink* createNew(UsageEnvironment& env,
                   MediaSubsession& subsession, // identifies the kind of data that's being received
                   char const* streamId = NULL); // identifies the stream itself (optional)
+  void printfHex(u_int8_t* data, int len);
 
 private:
   DummySink(UsageEnvironment& env, MediaSubsession& subsession, char const* streamId);
@@ -173,6 +179,7 @@ static unsigned rtspClientCount = 0; // Counts how many streams (i.e., "RTSPClie
 void openURL(UsageEnvironment& env, char const* progName, char const* rtspURL) {
   // Begin by creating a "RTSPClient" object.  Note that there is a separate "RTSPClient" object for each stream that we wish
   // to receive (even if more than stream uses the same "rtsp://" URL).
+  env << "chenwenmin pid" << getpid() << " "  << __func__ << " " << __LINE__ << " chenwenmin : " << rtspURL << "\n";
   RTSPClient* rtspClient = ourRTSPClient::createNew(env, rtspURL, RTSP_CLIENT_VERBOSITY_LEVEL, progName);
   if (rtspClient == NULL) {
     env << "Failed to create a RTSP client for URL \"" << rtspURL << "\": " << env.getResultMsg() << "\n";
@@ -184,6 +191,7 @@ void openURL(UsageEnvironment& env, char const* progName, char const* rtspURL) {
   // Next, send a RTSP "DESCRIBE" command, to get a SDP description for the stream.
   // Note that this command - like all RTSP commands - is sent asynchronously; we do not block, waiting for a response.
   // Instead, the following function call returns immediately, and we handle the RTSP response later, from within the event loop:
+  env << "chenwenmin pid" << getpid() << " "  << __func__ << ":" <<__LINE__ << "\n";
   rtspClient->sendDescribeCommand(continueAfterDESCRIBE);
 }
 
@@ -194,7 +202,7 @@ void continueAfterDESCRIBE(RTSPClient* rtspClient, int resultCode, char* resultS
   do {
     UsageEnvironment& env = rtspClient->envir(); // alias
     StreamClientState& scs = ((ourRTSPClient*)rtspClient)->scs; // alias
-
+    env << "chenwenmin pid" << getpid() << " "  << __func__ << ":" <<__LINE__ << "\n";
     if (resultCode != 0) {
       env << *rtspClient << "Failed to get a SDP description: " << resultString << "\n";
       delete[] resultString;
@@ -220,6 +228,7 @@ void continueAfterDESCRIBE(RTSPClient* rtspClient, int resultCode, char* resultS
     // (Each 'subsession' will have its own data source.)
     scs.iter = new MediaSubsessionIterator(*scs.session);
     setupNextSubsession(rtspClient);
+    env << "chenwenmin pid" << getpid() << " "  << __func__ << ":" <<__LINE__ << "\n";
     return;
   } while (0);
 
@@ -234,7 +243,7 @@ void continueAfterDESCRIBE(RTSPClient* rtspClient, int resultCode, char* resultS
 void setupNextSubsession(RTSPClient* rtspClient) {
   UsageEnvironment& env = rtspClient->envir(); // alias
   StreamClientState& scs = ((ourRTSPClient*)rtspClient)->scs; // alias
-
+    env << "chenwenmin pid" << getpid() << " "  << __func__ << ":" <<__LINE__ << "\n";
   scs.subsession = scs.iter->next();
   if (scs.subsession != NULL) {
     if (!scs.subsession->initiate()) {
@@ -250,6 +259,7 @@ void setupNextSubsession(RTSPClient* rtspClient) {
       env << ")\n";
 
       // Continue setting up this subsession, by sending a RTSP "SETUP" command:
+      env << "chenwenmin pid" << getpid() << " "  << __func__ << ":" <<__LINE__ << "\n";
       rtspClient->sendSetupCommand(*scs.subsession, continueAfterSETUP, False, REQUEST_STREAMING_OVER_TCP);
     }
     return;
@@ -269,7 +279,7 @@ void continueAfterSETUP(RTSPClient* rtspClient, int resultCode, char* resultStri
   do {
     UsageEnvironment& env = rtspClient->envir(); // alias
     StreamClientState& scs = ((ourRTSPClient*)rtspClient)->scs; // alias
-
+    env << "chenwenmin pid" << getpid() << " "  << "tid " << (int)syscall(__NR_gettid) << " " << __func__ << ":" <<__LINE__ << "\n";
     if (resultCode != 0) {
       env << *rtspClient << "Failed to set up the \"" << *scs.subsession << "\" subsession: " << resultString << "\n";
       break;
@@ -297,9 +307,11 @@ void continueAfterSETUP(RTSPClient* rtspClient, int resultCode, char* resultStri
 
     env << *rtspClient << "Created a data sink for the \"" << *scs.subsession << "\" subsession\n";
     scs.subsession->miscPtr = rtspClient; // a hack to let subsession handler functions get the "RTSPClient" from the subsession
+    env << "chenwenmin pid" << getpid() << " "  << __func__ << ":" <<__LINE__ << "\n";
     scs.subsession->sink->startPlaying(*(scs.subsession->readSource()),
                        subsessionAfterPlaying, scs.subsession);
     // Also set a handler to be called if a RTCP "BYE" arrives for this subsession:
+    env << "chenwenmin pid" << getpid() << " "  << __func__ << ":" <<__LINE__ << "\n";
     if (scs.subsession->rtcpInstance() != NULL) {
       scs.subsession->rtcpInstance()->setByeWithReasonHandler(subsessionByeHandler, scs.subsession);
     }
@@ -333,7 +345,7 @@ void continueAfterPLAY(RTSPClient* rtspClient, int resultCode, char* resultStrin
       scs.streamTimerTask = env.taskScheduler().scheduleDelayedTask(uSecsToDelay, (TaskFunc*)streamTimerHandler, rtspClient);
     }
 
-    env << *rtspClient << "Started playing session";
+    env << "chenwenmin pid " << getpid() << " "  << __func__ << ":" <<__LINE__ << " " << *rtspClient << "Started playing session";
     if (scs.duration > 0) {
       env << " (for up to " << scs.duration << " seconds)";
     }
@@ -376,7 +388,7 @@ void subsessionByeHandler(void* clientData, char const* reason) {
   RTSPClient* rtspClient = (RTSPClient*)subsession->miscPtr;
   UsageEnvironment& env = rtspClient->envir(); // alias
 
-  env << *rtspClient << "Received RTCP \"BYE\"";
+  env << "chenwenmin pid" << getpid() << " "  << __func__ << ":" <<__LINE__ << " " << *rtspClient << "Received RTCP \"BYE\"";
   if (reason != NULL) {
     env << " (reason:\"" << reason << "\")";
     delete[] (char*)reason;
@@ -408,6 +420,7 @@ void shutdownStream(RTSPClient* rtspClient, int exitCode) {
     MediaSubsession* subsession;
 
     while ((subsession = iter.next()) != NULL) {
+        env << "chenwenmin pid" << getpid() << " "  << __func__ << ":"<< __LINE__ << " iter " << ".\n";
       if (subsession->sink != NULL) {
     Medium::close(subsession->sink);
     subsession->sink = NULL;
@@ -430,11 +443,12 @@ void shutdownStream(RTSPClient* rtspClient, int exitCode) {
   env << *rtspClient << "Closing the stream.\n";
   Medium::close(rtspClient);
     // Note that this will also cause this stream's "StreamClientState" structure to get reclaimed.
-
+  env << "chenwenmin pid" << getpid() << " "  << __func__ << ":"<< __LINE__ << " rtspClientCount=" << rtspClientCount << ".\n";
   if (--rtspClientCount == 0) {
     // The final stream has ended, so exit the application now.
     // (Of course, if you're embedding this code into your own application, you might want to comment this out,
     // and replace it with "eventLoopWatchVariable = 1;", so that we leave the LIVE555 event loop, and continue running "main()".)
+    env << "chenwenmin pid" << getpid() << " "  << __func__ << ":"<< __LINE__ << " rtspClientCount=" << rtspClientCount << ".\n";
     exit(exitCode);
   }
 }
@@ -496,6 +510,33 @@ DummySink::~DummySink() {
   delete[] fStreamId;
 }
 
+#include <stdio.h>
+
+void DummySink::printfHex(u_int8_t* data, int len)
+{
+#if 1
+    int i = 0;
+
+    for(i = 0; i < len; i++) {
+        if(0 == (i % 8)) {
+            envir() << "\n";
+        }
+        envir() << data[i] << ",";
+    }
+    envir() << "\n";
+#else
+
+    int i = 0;
+
+    for(i = 0; i < len; i++) {
+        if(0 == (i % 8)) {
+            printf("\n");
+        }
+        printf("0x%2x, ", data[i]);
+    }
+    printf("\n");
+#endif
+}
 void DummySink::afterGettingFrame(void* clientData, unsigned frameSize, unsigned numTruncatedBytes,
                   struct timeval presentationTime, unsigned durationInMicroseconds) {
   DummySink* sink = (DummySink*)clientData;
@@ -509,7 +550,7 @@ void DummySink::afterGettingFrame(unsigned frameSize, unsigned numTruncatedBytes
                   struct timeval presentationTime, unsigned /*durationInMicroseconds*/) {
   // We've just received a frame of data.  (Optionally) print out information about it:
 #ifdef DEBUG_PRINT_EACH_RECEIVED_FRAME
-  if (fStreamId != NULL) envir() << "chenwenmin Stream \"" << fStreamId << "\"; ";
+  if (fStreamId != NULL) envir() << "chenwenmin " << "pid " << getpid() << " " << "Stream \"" << fStreamId << "\"; ";
   envir() << fSubsession.mediumName() << "/" << fSubsession.codecName() << ":\tReceived " << frameSize << " bytes";
   if (numTruncatedBytes > 0) envir() << " (with " << numTruncatedBytes << " bytes truncated)";
   char uSecsStr[6+1]; // used to output the 'microseconds' part of the presentation time
@@ -523,13 +564,17 @@ void DummySink::afterGettingFrame(unsigned frameSize, unsigned numTruncatedBytes
 #endif
   envir() << "\n";
 #endif
-
+    printfHex(fReceiveBuffer, (frameSize > 32) ? 32 : frameSize);
   // Then continue, to request the next frame of data:
+    envir() << "chenwenmin pid " << getpid() << " "  << "tid " << (int)syscall(__NR_gettid) << " "<< __func__ << ":" <<__LINE__ << "\n";
   continuePlaying();
 }
 
+
 Boolean DummySink::continuePlaying() {
   if (fSource == NULL) return False; // sanity check (should not happen)
+
+  envir() << "chenwenmin pid " << getpid() << " "  << "tid " << (int)syscall(__NR_gettid) << " "<< __func__ << ":" <<__LINE__ << "\n";
 
   // Request the next frame of data from our input source.  "afterGettingFrame()" will get called later, when it arrives:
   fSource->getNextFrame(fReceiveBuffer, DUMMY_SINK_RECEIVE_BUFFER_SIZE,
@@ -537,3 +582,94 @@ Boolean DummySink::continuePlaying() {
                         onSourceClosure, this);
   return True;
 }
+
+struct RTSPClientAttr{
+    unsigned int m_uiDataLen;
+    unsigned int m_uiTimestamp;
+    int m_iWidth;
+    int m_iHigh;
+};
+
+typedef int (RTSPClient_CallBack)(int _iType, RTSPClientAttr *_pstRTSPClientAttr, u_int8_t *_pucData, void *_pvPri);
+
+#define  RTSPCLIENT_URL_LEN     256
+
+class RTSPClientInfo {
+public:
+    char m_cRTSPUrl[RTSPCLIENT_URL_LEN];//rtsp url
+    RTSPClient_CallBack* m_pRTSPClientCallBack;//callback
+};
+
+
+class RTSPClientSession/*: public ourRTSPClient*/ {
+protected:
+  RTSPClientSession();
+  virtual ~RTSPClientSession();
+
+public:
+  static int RTSPClientSessionInit();
+  int StartRTSPClientSession(RTSPClientInfo *_pRTSPClientInfo);
+  int StopRTSPClientSession();
+  int SetCBRTSPClientSession();
+
+private:
+  RTSPClient *m_pRTSPClient;
+  u_int8_t* m_pucReceiveFrame;
+  RTSPClient_CallBack* m_pRTSPClientCallBack;
+
+  private:
+  static TaskScheduler* m_pscheduler;
+  static UsageEnvironment* m_penv;
+
+};
+
+TaskScheduler* RTSPClientSession::m_pscheduler = NULL;
+UsageEnvironment* RTSPClientSession::m_penv = NULL;
+
+RTSPClientSession::RTSPClientSession()
+{
+    m_pRTSPClient = NULL;
+    m_pucReceiveFrame = NULL;
+    m_pRTSPClientCallBack = NULL;
+
+    return;
+}
+
+RTSPClientSession::~RTSPClientSession()
+{
+
+    return;
+}
+
+int RTSPClientSession::RTSPClientSessionInit()
+{
+    // Begin by setting up our usage environment:
+    if(NULL == RTSPClientSession::m_penv) {
+        RTSPClientSession::m_pscheduler = BasicTaskScheduler::createNew();
+        RTSPClientSession::m_penv = BasicUsageEnvironment::createNew(*(RTSPClientSession::m_pscheduler));
+        UsageEnvironment* env = RTSPClientSession::m_penv;
+        // All subsequent activity takes place within the event loop:
+        env->taskScheduler().doEventLoop(&eventLoopWatchVariable);
+        // This function call does not return, unless, at some point in time, "eventLoopWatchVariable" gets set to something non-zero.
+    }
+
+    return 0;
+}
+
+int RTSPClientSession::StartRTSPClientSession(RTSPClientInfo *_pRTSPClientInfo)
+{
+    if(NULL == _pRTSPClientInfo) {
+        return -1;
+    }
+
+    if(NULL == _pRTSPClientInfo->m_pRTSPClientCallBack) {
+        return -1;
+    }
+
+    UsageEnvironment* env = RTSPClientSession::m_penv;
+    openURL(*env, "abcd", _pRTSPClientInfo->m_cRTSPUrl);
+
+
+    return 0;
+}
+
