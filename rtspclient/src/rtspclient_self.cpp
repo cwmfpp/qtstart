@@ -624,7 +624,6 @@ public:
 private:
   RTSPClient *m_pRTSPClient;
   u_int8_t* m_pucReceiveFrame;
-  RTSPClient_CallBack *m_pRTSPClientCallBack;
 
   public:
   static TaskScheduler* m_pscheduler;
@@ -639,7 +638,6 @@ RTSPClientSession::RTSPClientSession()
 {
     m_pRTSPClient = NULL;
     m_pucReceiveFrame = NULL;
-    m_pRTSPClientCallBack = NULL;
 
     return;
 }
@@ -711,10 +709,9 @@ int RTSPClientSession::StartRTSPClientSession(RTSPClientInfo *_pRTSPClientInfo)
     }
 
     UsageEnvironment* env = RTSPClientSession::m_penv;
-    m_pRTSPClientCallBack = _pRTSPClientInfo->m_pRTSPClientCallBack;
 
     m_pRTSPClient = openURL(*env, "wenminchen@126.com", _pRTSPClientInfo->m_cRTSPUrl);
-    ((ourRTSPClient*)m_pRTSPClient)->m_pRTSPClientCallBack = m_pRTSPClientCallBack;
+    ((ourRTSPClient*)m_pRTSPClient)->m_pRTSPClientCallBack = _pRTSPClientInfo->m_pRTSPClientCallBack;
 
     //StreamClientState& scs = ((ourRTSPClient*)m_pRTSPClient)->scs; // alias
 
