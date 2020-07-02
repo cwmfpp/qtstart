@@ -139,6 +139,7 @@ protected:
 public:
   StreamClientState scs;
   RTSPClient_CallBack* m_pRTSPClientCallBack;
+  void *m_pvPri;
 };
 
 // Define a data sink (a subclass of "MediaSink") to receive the data for each subsession (i.e., each audio or video 'substream').
@@ -153,6 +154,7 @@ public:
                   char const* streamId = NULL); // identifies the stream itself (optional)
   void printfHex(u_int8_t* data, int len);
   RTSPClient_CallBack* m_pRTSPClientCallBack;
+  void *m_pvPri;
 
 private:
   DummySink(UsageEnvironment& env, MediaSubsession& subsession, char const* streamId);
@@ -312,6 +314,7 @@ void continueAfterSETUP(RTSPClient* rtspClient, int resultCode, char* resultStri
     }
 
     ((DummySink *)(scs.subsession->sink))->m_pRTSPClientCallBack = ((ourRTSPClient*)rtspClient)->m_pRTSPClientCallBack;
+    ((DummySink *)(scs.subsession->sink))->m_pvPri = ((ourRTSPClient*)rtspClient)->m_pvPri;
 
     env << *rtspClient << "Created a data sink for the \"" << *scs.subsession << "\" subsession\n";
     scs.subsession->miscPtr = rtspClient; // a hack to let subsession handler functions get the "RTSPClient" from the subsession
@@ -579,7 +582,7 @@ void DummySink::afterGettingFrame(unsigned frameSize, unsigned numTruncatedBytes
         envir() << "chenwenmin pid " << (int *)m_pRTSPClientCallBack << " "<< __func__ << ":" <<__LINE__ << "\n";
         stRTSPClientAttr.m_uiDataLen = frameSize;
 
-        (*m_pRTSPClientCallBack)(0, &stRTSPClientAttr, fReceiveBuffer, NULL);
+        (*m_pRTSPClientCallBack)(0, &stRTSPClientAttr, fReceiveBuffer, m_pvPri);
     }
     printfHex(fReceiveBuffer, (frameSize > 32) ? 32 : frameSize);
   // Then continue, to request the next frame of data:
@@ -624,6 +627,7 @@ public:
 private:
   RTSPClient *m_pRTSPClient;
   u_int8_t* m_pucReceiveFrame;
+  void *m_pvPri;
 
   public:
   static TaskScheduler* m_pscheduler;
@@ -638,6 +642,7 @@ RTSPClientSession::RTSPClientSession()
 {
     m_pRTSPClient = NULL;
     m_pucReceiveFrame = NULL;
+    m_pvPri = this;
 
     return;
 }
@@ -712,6 +717,7 @@ int RTSPClientSession::StartRTSPClientSession(RTSPClientInfo *_pRTSPClientInfo)
 
     m_pRTSPClient = openURL(*env, "wenminchen@126.com", _pRTSPClientInfo->m_cRTSPUrl);
     ((ourRTSPClient*)m_pRTSPClient)->m_pRTSPClientCallBack = _pRTSPClientInfo->m_pRTSPClientCallBack;
+    ((ourRTSPClient*)m_pRTSPClient)->m_pvPri = this;
 
     //StreamClientState& scs = ((ourRTSPClient*)m_pRTSPClient)->scs; // alias
 
@@ -731,7 +737,7 @@ static int TestRTSPClient_CallBack(int _iType, RTSPClientAttr *_pstRTSPClientAtt
 {
     UsageEnvironment* env = RTSPClientSession::m_penv;
 
-    *env << "chenwenmin  " << __func__ << ":" <<__LINE__ << "len " << _pstRTSPClientAttr->m_uiDataLen << "\n";
+    *env << "chenwenmin  " << __func__ << ":" <<__LINE__ << "len " << _pstRTSPClientAttr->m_uiDataLen << "pcData addr:" << _pucData << " _pvPri addr:" << _pvPri << "\n";
 
     return 0;
 }
