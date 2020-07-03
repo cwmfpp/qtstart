@@ -27,13 +27,16 @@ void TestRTSPClientSession()
     RTSPClientSession stRTSPClientSession2;
 
     RTSPClientInfo stRTSPClientInfo;
-    snprintf(stRTSPClientInfo.m_cRTSPUrl, sizeof(stRTSPClientInfo.m_cRTSPUrl), "%s", "rtsp://192.168.128.30:8554/slamtv60.264");
+    snprintf(stRTSPClientInfo.m_cRTSPUrl, sizeof(stRTSPClientInfo.m_cRTSPUrl), "%s", "rtsp://username1:password1@192.168.128.30:8554/slamtv60.264");
     stRTSPClientInfo.m_pRTSPClientCallBack = TestRTSPClient_CallBack;
     stRTSPClientSession.StartRTSPClientSession(&stRTSPClientInfo);
 
+#if 0
     snprintf(stRTSPClientInfo.m_cRTSPUrl, sizeof(stRTSPClientInfo.m_cRTSPUrl), "%s", "rtsp://192.168.128.30:8554/slamtv61.264");
     stRTSPClientInfo.m_pRTSPClientCallBack = TestRTSPClient_CallBack;
     stRTSPClientSession2.StartRTSPClientSession(&stRTSPClientInfo);
+#endif
+
 #if 0
     sleep(5);
     stRTSPClientSession.StopRTSPClientSession();

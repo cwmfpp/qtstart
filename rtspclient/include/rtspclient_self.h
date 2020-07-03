@@ -30,7 +30,10 @@ typedef int (RTSPClient_CallBack)(int _iType, RTSPClientAttr *_pstRTSPClientAttr
 
 class RTSPClientInfo {
 public:
-    char m_cRTSPUrl[RTSPCLIENT_URL_LEN];//rtsp url
+    char m_cRTSPUrl[RTSPCLIENT_URL_LEN];/*rtsp url; The user name, password, and request address are provided by the server;
+                                          Authentication rtsp://username1:password1@192.168.128.30:8554/slamtv60.264;
+                                          no Authentication rtsp://192.168.128.30:8554/slamtv60.264;
+                                        */
     RTSPClient_CallBack* m_pRTSPClientCallBack;//callback
 };
 
@@ -51,14 +54,12 @@ private:
   unsigned char* m_pucReceiveFrame;
   void *m_pvPri;
 
-  public:
+public:
   static TaskScheduler* m_pscheduler;
   static UsageEnvironment* m_penv;
 
 };
 
-int main_rtspclient(int argc, char** argv);
-
-void TestRTSPClientSession();
+//int main_rtspclient(int argc, char** argv);
 
 #endif // __RTSPCLIENT_SEFL_H
