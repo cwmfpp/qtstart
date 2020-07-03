@@ -589,6 +589,7 @@ void DummySink::afterGettingFrame(unsigned frameSize, unsigned numTruncatedBytes
         fReceiveBuffer[2] = 0x00;
         fReceiveBuffer[3] = 0x01;
         stRTSPClientAttr.m_uiDataLen = 4 + frameSize;
+        stRTSPClientAttr.m_uiTimestamp = fSubsession.getNormalPlayTime(presentationTime) * 1000;
         (*m_pRTSPClientCallBack)(RTSPC_CALLBACK_TYPE_MEDIA_DATA, &stRTSPClientAttr, fReceiveBuffer, m_pvPri);
     }
     printfHex(fReceiveBuffer, (frameSize > 32) ? 32 : frameSize);

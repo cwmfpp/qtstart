@@ -12,8 +12,8 @@
 #include "BasicUsageEnvironment.hh"
 
 struct RTSPClientAttr{
-    unsigned int m_uiDataLen;
-    unsigned int m_uiTimestamp;
+    unsigned int m_uiDataLen;//B
+    unsigned int m_uiTimestamp;//ms
     int m_iWidth;
     int m_iHigh;
 };

@@ -45,7 +45,7 @@ static int TestRTSPClient_CallBack(int _iType, RTSPClientAttr *_pstRTSPClientAtt
 
 
     if(NULL != _pstRTSPClientAttr) {
-        *env << "chenwenmin  " << __func__ << ":" <<__LINE__ << " _iType:" << _iType << " len " << _pstRTSPClientAttr->m_uiDataLen << " pcData addr:" << _pucData << " _pvPri addr:" << _pvPri << "\n";
+        *env << "chenwenmin  " << __func__ << ":" <<__LINE__ << " _iType:" << _iType << " len " << _pstRTSPClientAttr->m_uiDataLen << " timestamp: " << _pstRTSPClientAttr->m_uiTimestamp << " pcData addr:" << _pucData << " _pvPri addr:" << _pvPri << "\n";
     } else {
         *env << "chenwenmin  " << __func__ << ":" <<__LINE__ << " _iType:" << _iType << " pcData addr:" << _pucData << " _pvPri addr:" << _pvPri << "\n";
 
