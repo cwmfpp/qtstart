@@ -584,8 +584,11 @@ void DummySink::afterGettingFrame(unsigned frameSize, unsigned numTruncatedBytes
         //(int _iType, RTSPClientAttr *_pstRTSPClientAttr, unsigned char *_pucData, void *_pvPri);
         RTSPClientAttr stRTSPClientAttr;
         envir() << "chenwenmin pid " << (int *)m_pRTSPClientCallBack << " "<< __func__ << ":" <<__LINE__ << "\n";
-        stRTSPClientAttr.m_uiDataLen = frameSize;
-
+        fReceiveBuffer[0] = 0x00;
+        fReceiveBuffer[1] = 0x00;
+        fReceiveBuffer[2] = 0x00;
+        fReceiveBuffer[3] = 0x01;
+        stRTSPClientAttr.m_uiDataLen = 4 + frameSize;
         (*m_pRTSPClientCallBack)(RTSPC_CALLBACK_TYPE_MEDIA_DATA, &stRTSPClientAttr, fReceiveBuffer, m_pvPri);
     }
     printfHex(fReceiveBuffer, (frameSize > 32) ? 32 : frameSize);
@@ -601,7 +604,7 @@ Boolean DummySink::continuePlaying() {
   envir() << "chenwenmin pid " << getpid() << " "  << "tid " << (int)syscall(__NR_gettid) << " "<< __func__ << ":" <<__LINE__ << "\n";
 
   // Request the next frame of data from our input source.  "afterGettingFrame()" will get called later, when it arrives:
-  fSource->getNextFrame(fReceiveBuffer, DUMMY_SINK_RECEIVE_BUFFER_SIZE,
+  fSource->getNextFrame(fReceiveBuffer + 4, DUMMY_SINK_RECEIVE_BUFFER_SIZE - 4,
                         afterGettingFrame, this,
                         onSourceClosure, this);
   return True;
