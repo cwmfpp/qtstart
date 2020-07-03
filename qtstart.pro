@@ -22,14 +22,17 @@ INCLUDEPATH +=\
     include/live555/groupsock \
     include/live555/liveMedia \
     include/live555/UsageEnvironment \
-    rtspclient/include
+    rtspclient/include \
+    demo/rtspclientdemo/include
 
 SOURCES += \
+    demo/rtspclientdemo/src/rtspclientdemo.cpp \
     rtspclient/src/rtspclient_self.cpp \
     gui/src/main.cpp \
     gui/src/dialog.cpp
 
 HEADERS += \
+    demo/rtspclientdemo/include/rtspclientdemo.h \
     gui/include/dialog.h \
     rtspclient/include/rtspclient_self.h
 
